@@ -62,7 +62,8 @@ class Player(Sprite):
         self.jumping = False
         self.moving = False
         self.gems = 0
-        self.lives = 3
+        self.ammo = MAX_AMMO
+        self.lives = 100
         print("player instance created")
         self.load_images()
 
@@ -77,9 +78,24 @@ class Player(Sprite):
             self.acc.y = -PLAYER_ACC
         if keys[pg.K_s]:
             self.acc.y = PLAYER_ACC
+        if keys[pg.K_f]:
+            if self.ammo == 0:
+                pass
+            else:
+                self.pew()
+                self.ammo -= 1
+        if keys[pg.K_c]:
+            self.ammo = MAX_AMMO
         # Unsure if required
         # if self.vel.x != 0 and self.vel.y != 0:
         #     self.vel *= 0.707106
+    
+    # Shoots the projectile
+    def pew(self):
+        if self.acc.x == 0 and self.acc.y == 0:
+            PewPew(self.game, self.hit_rect.centerx, self.rect.centery, TILESIZE/8, TILESIZE/8, 0, -10)
+        else:
+            PewPew(self.game, self.hit_rect.centerx, self.rect.centery, TILESIZE/8, TILESIZE/8, (self.acc.x)*20, (self.acc.y)*20)
 
     def jump(self):
         pass
@@ -151,7 +167,7 @@ class Player(Sprite):
                 Particle(self.game, hits[0].rect.x, hits[0].rect.y, GOLD)
                 hits[0].kill()
         # Planet Discovery
-        hits = pg.sprite.spritecollide(self, self.game.all_gems, True)
+        hits = pg.sprite.spritecollide(self, self.game.all_planets, True)
         for h in hits:
             self.game.score += 3
             #self.game.pickup_snd.play()
@@ -159,7 +175,12 @@ class Player(Sprite):
                 Particle(self.game, hits[0].rect.x, hits[0].rect.y, GREEN)
                 hits[0].kill()
         # Asteroid Collision
-        hits = pg.sprite.spritecollide(self, self.game.all_gems, True)
+        hits = pg.sprite.spritecollide(self, self.game.all_asteroids, True)
+        for h in hits:
+            self.lives -= 1
+            self.game.score -= 2
+        # Enemy Collision
+        hits = pg.sprite.spritecollide(self, self.game.all_enemies, True)
         for h in hits:
             self.lives -= 1
             self.game.score -= 2
@@ -391,8 +412,6 @@ class Gem(Sprite):
         self.game = game
         self.spritesheet = Spritesheet(path.join(self.game.img_dir, "sprite_sheet.png"))
         self.image = self.spritesheet.get_image(96,128, TILESIZE, TILESIZE)
-        #self.image.set_colorkey(BLACK)
-        #self.image.fill(YELLOW)
         self.rect = self.image.get_rect()
         self.vel = vec(0,0)
         self.pos = vec(x,y) * TILESIZE
@@ -420,3 +439,41 @@ class Planet(Sprite):
         self.pos = vec(x,y) * TILESIZE
         self.rect.center = self.pos
         print("Planet Instance Created")
+
+# Copied Gem Class to Make Level Class with Sprite as Super Class
+class Level(Sprite):
+    def __init__(self, game, x, y):
+        self.groups = game.all_sprites, game.all_levels
+        Sprite.__init__(self, self.groups)
+        self.game = game
+        self.spritesheet = Spritesheet(path.join(self.game.img_dir, "sprite_sheet.png"))
+        self.image = self.spritesheet.get_image(32,96, TILESIZE, TILESIZE)
+        self.rect = self.image.get_rect()
+        self.vel = vec(0,0)
+        self.pos = vec(x,y) * TILESIZE
+        self.rect.center = self.pos
+        print("LevelUp Instance Created")
+
+# Copied Particle Class to Make Projectile Class with Sprite as Super Class
+class PewPew(Sprite):
+    def __init__(self, game, x, y, w, h, sx, sy):
+        self.groups = game.all_sprites, game.all_pews
+        Sprite.__init__(self, self.groups)
+        self.game = game
+        self.image = pg.Surface((w,h))
+        self.image.set_colorkey(BLACK)
+        self.rect = self.image.get_rect()
+        self.radius = TILESIZE / 8
+        pg.draw.circle(self.image, YELLOW, self.rect.center, self.radius)
+        self.rect.x = x
+        self.rect.y = y
+        self.speed_x = sx
+        self.speed_y = sy
+        self.fired = False
+
+    def update(self):
+        self.rect.x += self.speed_x
+        self.rect.y += self.speed_y
+
+        if self.rect.y < 0 or self.rect.y > HEIGHT or self.rect.x < 0 or self.rect.x > WIDTH:
+            self.kill

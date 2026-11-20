@@ -77,6 +77,8 @@ class Game:
         self.all_particles = pg.sprite.Group()
         self.all_tiles = pg.sprite.Group()
         self.all_planets = pg.sprite.Group()
+        self.all_levels = pg.sprite.Group()
+        self.all_pews = pg.sprite.Group()
         # Instantiate Player Here 
         # Instantiates  all sprite classes
         for row, tiles in enumerate(self.map.data):
@@ -85,6 +87,8 @@ class Game:
                     Wall(self, col, row)
                 if tile == '1':
                     Asteroid(self, col, row)
+                if tile == 'U':
+                    Level(self, col, row)
                 if tile == 'I':
                     f = FloorTile(self, col, row, CYAN)
                     f.variant = 'ice'
@@ -140,9 +144,9 @@ class Game:
         self.screen.fill(BLACK)
         self.all_sprites.draw(self.screen)
         #self.draw_text("Frames per second: " + str(floor(1/self.dt)), 24, WHITE, WIDTH/2, HEIGHT/4)
-        self.draw_text(f"Gems:{self.player.gems} ", 24, YELLOW, WIDTH/2, HEIGHT/9)
+        self.draw_text(f"Score:{self.score} ", 24, YELLOW, WIDTH/2, HEIGHT/9)
         self.draw_text(f"High Score:{self.highscore} ", 24, GOLD, WIDTH/2, HEIGHT/13)
-        self.draw_text(f"Lives:{self.player.lives} ", 24, RED, WIDTH/2, HEIGHT/17)
+        self.draw_text(f"Lives:{self.player.lives} ", 24, RED, WIDTH/2, HEIGHT/19)
         pg.display.flip()
 
 #Starts Game
